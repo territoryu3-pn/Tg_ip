@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>IP Check</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body style="background-color: #1c1c1e; color: white; text-align: center; padding-top: 50px; font-family: sans-serif;">
+    <h2>Определяем IP...</h2>
+    <p>Пожалуйста, подождите.</p>
+
+    <script>
+        window.onload = function() {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    tg.sendData(JSON.stringify({ ip: data.ip }));
+                    tg.close();
+                })
+                .catch(err => {
+                    tg.sendData(JSON.stringify({ ip: "Ошибка получения IP" }));
+                    tg.close();
+                });
+        };
+    </script>
+</body>
+</html>
